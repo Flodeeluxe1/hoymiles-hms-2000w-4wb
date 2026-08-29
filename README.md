@@ -22,11 +22,11 @@ Custom Home Assistant integration for monitoring Hoymiles S-Miles Cloud.
 
 ## Installation with HACS
 
-1. Create a GitHub repository named `hoymiles-smiles` (or another name you prefer).
+1. Co install it through HACS, add the repository as a custom repository under HACS → Integrations
 2. Upload the contents of this repository.
 3. In Home Assistant, open **HACS → Integrations**.
 4. Open the HACS menu and choose **Custom repositories**.
-5. Enter your GitHub repository URL.
+5. Enter the GitHub repository URL https://github.com/Flodeeluxe1/hoymiles-hms-2000w-4wb
 6. Select **Integration** as the category.
 7. Install **Hoymiles S-Miles Cloud**.
 8. Restart Home Assistant.
