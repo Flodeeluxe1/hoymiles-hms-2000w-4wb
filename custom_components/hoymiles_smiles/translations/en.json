@@ -1,0 +1,37 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "S-Miles Cloud",
+        "description": "Enter your Hoymiles S-Miles Cloud credentials.",
+        "data": {
+          "email": "Email",
+          "password": "Password",
+          "dc": "Data center"
+        }
+      },
+      "station": {
+        "title": "Select station",
+        "description": "Choose the S-Miles station to monitor.",
+        "data": {
+          "station_id": "Station"
+        }
+      },
+      "inverter": {
+        "title": "Select inverter",
+        "description": "Choose the inverter to monitor.",
+        "data": {
+          "inverter_id": "Inverter"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect or authenticate with S-Miles Cloud.",
+      "no_stations": "No stations were found for this account.",
+      "no_inverters": "No inverters were found for the selected station."
+    },
+    "abort": {
+      "no_inverters": "No inverters were found for the selected station."
+    }
+  }
+}
