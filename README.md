@@ -1,6 +1,6 @@
 # Hoymiles S-Miles Cloud — Home Assistant / HACS
 
-Custom Home Assistant integration for monitoring Hoymiles S-Miles Cloud.
+Custom Home Assistant integration for monitoring Hoymiles S-Miles Cloud. 
 IMPORTANT: This is the first alpha version. PLEASE DO NOT INSTALL !!!!
 
 > **Read-only monitoring for the first release.** No inverter power-control/write commands are implemented.
