@@ -1,6 +1,6 @@
 # Hoymiles S-Miles Cloud — Home Assistant / HACS
 
-Custom Home Assistant integration for monitoring Hoymiles S-Miles Cloud. 
+Custom Home Assistant integration for monitoring Hoymiles S-Miles Cloud.  
 IMPORTANT: This is the first alpha version. PLEASE DO NOT INSTALL !!!!
 
 > **Read-only monitoring for the first release.** No inverter power-control/write commands are implemented.
@@ -8,18 +8,10 @@ IMPORTANT: This is the first alpha version. PLEASE DO NOT INSTALL !!!!
 ## Features
 
 - S-Miles Cloud authentication using the proven Argon2id challenge
-- Dynamic station discovery
-- Dynamic inverter discovery
-- Near-realtime inverter power every 5 seconds
-- PV1–PV4 power
+- Dynamic station and inverter discovery
+- Realtime inverter and individual panel power every 5 seconds
 - Station daily/monthly/yearly/total energy
-- Station cloud real power
-- Cloud inverter power
-- AC voltage
-- AC frequency
-- Inverter temperature
-- Graceful handling of an empty realtime URI when the inverter/DTU is offline
-- Automatic refresh of the temporary realtime URI after failures
+- Inverter voltage, frequency and temperature
 
 ## Installation with HACS
 
@@ -38,10 +30,7 @@ IMPORTANT: This is the first alpha version. PLEASE DO NOT INSTALL !!!!
 13. Select the inverter.
 
 ## Important
-
-Do not put your S-Miles password, token, station IDs, or inverter serial numbers into GitHub.
-
-The integration discovers the station and inverter after login and stores the selected configuration in Home Assistant.
+BLA BLA
 
 ## Data update rates
 
@@ -60,6 +49,7 @@ This release is deliberately read-only. Power-control functionality is not inclu
 
 ## API reference
 
-The implementation was developed from working S-Miles Cloud API testing and also uses the public ioBroker Hoymiles implementation as a reference:
+The implementation was developed from working S-Miles Cloud API testing and also uses the following  Github implementations as a reference:
 
+https://github.com/Philra94/homeassistant-hoymiles-cloud  
 https://github.com/Eistee82/ioBroker.hoymiles
