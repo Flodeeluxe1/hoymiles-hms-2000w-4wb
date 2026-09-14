@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
+    SensorEntityDescription,
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
@@ -41,78 +41,112 @@ from .const import (
 from .coordinator import HoymilesCloudCoordinator, HoymilesRealtimeCoordinator
 
 
-@dataclass(frozen=True)
-class SensorDescription:
-    """Describe a Hoymiles sensor."""
-
-    key: str
-    name: str
-    unit: str | None = None
-    device_class: SensorDeviceClass | None = None
-    state_class: SensorStateClass | None = None
-
+SensorDescription = SensorEntityDescription
 
 REALTIME_SENSORS = (
     SensorDescription(
-        KEY_PAC, "Inverter Power", UnitOfPower.WATT,
-        SensorDeviceClass.POWER, SensorStateClass.MEASUREMENT
+        key=KEY_PAC,
+        name="Inverter Power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorDescription(
-        KEY_PV1, "PV1 Power", UnitOfPower.WATT,
-        SensorDeviceClass.POWER, SensorStateClass.MEASUREMENT
+        key=KEY_PV1,
+        name="PV1 Power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorDescription(
-        KEY_PV2, "PV2 Power", UnitOfPower.WATT,
-        SensorDeviceClass.POWER, SensorStateClass.MEASUREMENT
+        key=KEY_PV2,
+        name="PV2 Power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorDescription(
-        KEY_PV3, "PV3 Power", UnitOfPower.WATT,
-        SensorDeviceClass.POWER, SensorStateClass.MEASUREMENT
+        key=KEY_PV3,
+        name="PV3 Power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorDescription(
-        KEY_PV4, "PV4 Power", UnitOfPower.WATT,
-        SensorDeviceClass.POWER, SensorStateClass.MEASUREMENT
+        key=KEY_PV4,
+        name="PV4 Power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
 )
 
 CLOUD_SENSORS = (
     SensorDescription(
-        KEY_POWER, "Cloud Inverter Power", UnitOfPower.WATT,
-        SensorDeviceClass.POWER, SensorStateClass.MEASUREMENT
+        key=KEY_POWER,
+        name="Cloud Inverter Power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorDescription(
-        KEY_REAL_POWER, "Station Real Power", UnitOfPower.WATT,
-        SensorDeviceClass.POWER, SensorStateClass.MEASUREMENT
+        key=KEY_REAL_POWER,
+        name="Station Real Power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorDescription(
-        KEY_VOLTAGE, "AC Voltage", UnitOfElectricPotential.VOLT,
-        SensorDeviceClass.VOLTAGE, SensorStateClass.MEASUREMENT
+        key=KEY_VOLTAGE,
+        name="AC Voltage",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorDescription(
-        KEY_FREQUENCY, "AC Frequency", UnitOfFrequency.HERTZ,
-        SensorDeviceClass.FREQUENCY, SensorStateClass.MEASUREMENT
+        key=KEY_FREQUENCY,
+        name="AC Frequency",
+        native_unit_of_measurement=UnitOfFrequency.HERTZ,
+        device_class=SensorDeviceClass.FREQUENCY,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorDescription(
-        KEY_TEMPERATURE, "Inverter Temperature", UnitOfTemperature.CELSIUS,
-        SensorDeviceClass.TEMPERATURE, SensorStateClass.MEASUREMENT
+        key=KEY_TEMPERATURE,
+        name="Inverter Temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorDescription(
-        KEY_DAILY, "Daily Energy", "kWh",
-        SensorDeviceClass.ENERGY, SensorStateClass.TOTAL
+        key=KEY_DAILY,
+        name="Daily Energy",
+        native_unit_of_measurement="kWh",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL,
     ),
     SensorDescription(
-        KEY_MONTHLY, "Monthly Energy", "kWh",
-        SensorDeviceClass.ENERGY, SensorStateClass.TOTAL
+        key=KEY_MONTHLY,
+        name="Monthly Energy",
+        native_unit_of_measurement="kWh",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL,
     ),
     SensorDescription(
-        KEY_YEARLY, "Yearly Energy", "kWh",
-        SensorDeviceClass.ENERGY, SensorStateClass.TOTAL
+        key=KEY_YEARLY,
+        name="Yearly Energy",
+        native_unit_of_measurement="kWh",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL,
     ),
     SensorDescription(
-        KEY_TOTAL, "Total Energy", "kWh",
-        SensorDeviceClass.ENERGY, SensorStateClass.TOTAL_INCREASING
+        key=KEY_TOTAL,
+        name="Total Energy",
+        native_unit_of_measurement="kWh",
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
     ),
 )
+
 
 
 async def async_setup_entry(
@@ -163,7 +197,7 @@ class HoymilesSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self.entity_description = description
         self._attr_name = description.name
-        self._attr_native_unit_of_measurement = description.unit
+        self._attr_native_unit_of_measurement = description.native_unit_of_measurement
         self._attr_device_class = description.device_class
         self._attr_state_class = description.state_class
         self._attr_has_entity_name = True
