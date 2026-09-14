@@ -71,7 +71,7 @@ class HoymilesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         CONF_PASSWORD: user_input[CONF_PASSWORD],
                         CONF_DC: user_input.get("dc", DEFAULT_DC),
                     }
-                    return await self.async_step_station
+                    return await self.async_step_station()
 
             except (HoymilesApiError, OSError, TimeoutError):
                 errors["base"] = "cannot_connect"
