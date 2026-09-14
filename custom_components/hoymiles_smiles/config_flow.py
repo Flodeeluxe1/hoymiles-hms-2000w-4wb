@@ -105,7 +105,7 @@ class HoymilesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if not self._inverters:
                 return self.async_abort(reason="no_inverters")
 
-            return await self.async_step_inverter
+            return await self.async_step_inverter()
 
         station_options = {
             str(station["id"]): station.get("name") or str(station["id"])
