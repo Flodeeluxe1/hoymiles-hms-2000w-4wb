@@ -80,7 +80,7 @@ class HoymilesRealtimeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self.inverter_sn,
             )
         except Exception as err:
-            _LOGGER.debug("Realtime polling failed: %s", err)
+            _LOGGER.warning("Realtime polling failed: %s", err)
             # A failed/empty realtime channel is expected when offline.
             raise UpdateFailed(str(err)) from err
 
