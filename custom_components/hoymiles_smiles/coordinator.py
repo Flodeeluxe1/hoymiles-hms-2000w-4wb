@@ -68,7 +68,7 @@ class HoymilesRealtimeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self.inverter_sn,
             )
 
-            _LOGGER.debug(
+            _LOGGER.warning(
                 "Inverter %s online status: %s",
                 self.inverter_sn,
                 online,
