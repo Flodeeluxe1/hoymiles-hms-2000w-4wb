@@ -245,22 +245,57 @@ class HoymilesApi:
         self.realtime_uri = uri
         return uri
 
-    def poll_realtime_burst(
-        self,
-        station_id: int,
-        inverter_sn: str,
-    ) -> dict[str, Any]:
-        """Request m=3 inverter realtime data."""
-        if not self.realtime_uri:
-            self.get_realtime_uri(station_id)
 
-        if not self.realtime_uri:
+def poll_realtime_burst(
+    self,
+    station_id: int,
+    inverter_sn: str,
+) -> dict[str, Any]:
+    """Request m=3 inverter realtime data."""
+    if not self.realtime_uri:
+        self.get_realtime_uri(station_id)
+
+    if not self.realtime_uri:
+        raise HoymilesApiError(
+            "get_sd_uri returned an empty URI. "
+            "The inverter/DTU may currently be offline."
+        )
+
+    try:
+        response = self._post(
+            self.realtime_uri,
+            json_data={
+                "m": 3,
+                "mis": [inverter_sn],
+                "t": 1,
+            },
+        )
+        result = response.json()
+
+        LOGGER.warning("Realtime API response: %s", result)
+
+        if result.get("status") != "0":
             raise HoymilesApiError(
-                "get_sd_uri returned an empty URI. "
-                "The inverter/DTU may currently be offline."
+                f"Realtime burst failed: {result.get('message', result)}"
             )
 
-        try:
+        data = result.get("data", {})
+
+        # The realtime URI can expire without returning an API error.
+        # In that case Hoymiles returns data without the "mis" array.
+        if not data.get("mis"):
+            LOGGER.warning(
+                "Realtime URI appears to be expired. Requesting a fresh URI."
+            )
+
+            self.realtime_uri = ""
+            self.get_realtime_uri(station_id)
+
+            if not self.realtime_uri:
+                raise HoymilesApiError(
+                    "get_sd_uri returned an empty URI after realtime URI expired."
+                )
+
             response = self._post(
                 self.realtime_uri,
                 json_data={
@@ -271,17 +306,23 @@ class HoymilesApi:
             )
             result = response.json()
 
-            LOGGER.warning("Realtime API response: %s", result)
-            
+            LOGGER.warning("Realtime API response after URI refresh: %s", result)
+
             if result.get("status") != "0":
                 raise HoymilesApiError(
-                    f"Realtime burst failed: {result.get('message', result)}"
+                    "Realtime burst failed after URI refresh: "
+                    f"{result.get('message', result)}"
                 )
+
             return result.get("data", {})
-        except Exception:
-            # The temporary URI may have expired. Get a completely fresh one.
-            self.realtime_uri = ""
-            raise
+
+        return data
+
+    except Exception:
+        # Clear the URI so the next polling cycle obtains a fresh one.
+        self.realtime_uri = ""
+        raise
+
 
     def get_station_cloud_data(
         self,
