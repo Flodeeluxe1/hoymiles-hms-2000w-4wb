@@ -5,7 +5,10 @@ Home Assistant calls this client from executor jobs so requests do not block
 the Home Assistant event loop.
 """
 
+
 from __future__ import annotations
+
+import logging
 
 from typing import Any
 
@@ -25,6 +28,8 @@ from .const import (
 
 class HoymilesApiError(Exception):
     """Raised when the S-Miles API returns an error."""
+
+LOGGER = logging.getLogger(__name__)
 
 
 def create_chart_proto_class():
@@ -265,6 +270,9 @@ class HoymilesApi:
                 },
             )
             result = response.json()
+
+            LOGGER.debug("Realtime API response: %s", result)
+            
             if result.get("status") != "0":
                 raise HoymilesApiError(
                     f"Realtime burst failed: {result.get('message', result)}"
