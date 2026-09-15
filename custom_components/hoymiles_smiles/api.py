@@ -271,7 +271,7 @@ class HoymilesApi:
             )
             result = response.json()
 
-            LOGGER.debug("Realtime API response: %s", result)
+            LOGGER.warning("Realtime API response: %s", result)
             
             if result.get("status") != "0":
                 raise HoymilesApiError(
