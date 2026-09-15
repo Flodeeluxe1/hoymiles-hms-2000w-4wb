@@ -332,7 +332,7 @@ class HoymilesApi:
 
         response = self._post(
             url,
-            json_data={"sid": station_id},
+            json_data={"id": station_id},
         )
         result = response.json()
 
