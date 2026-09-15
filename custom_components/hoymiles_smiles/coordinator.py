@@ -59,8 +59,21 @@ class HoymilesRealtimeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             update_interval=timedelta(seconds=REALTIME_POLL_SECONDS),
         )
 
+    
     async def _async_update_data(self) -> dict[str, Any]:
         try:
+            online = await self.hass.async_add_executor_job(
+                self.api.get_device_status,
+                self.station_id,
+                self.inverter_sn,
+            )
+
+            _LOGGER.debug(
+                "Inverter %s online status: %s",
+                self.inverter_sn,
+                online,
+            )
+
             data = await self.hass.async_add_executor_job(
                 self.api.poll_realtime_burst,
                 self.station_id,
