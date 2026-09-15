@@ -240,12 +240,14 @@ class HoymilesApi:
         self.realtime_uri = uri
         return uri
 
-    def poll_realtime_burst(
-        self,
-        station_id: int,
-        inverter_sn: str,
-    ) -> dict[str, Any]:
-        """Request m=3 inverter realtime data."""
+
+def poll_realtime_burst(
+    self,
+    station_id: int,
+    inverter_sn: str,
+) -> dict[str, Any]:
+    """Request m=3 inverter realtime data."""
+    for attempt in range(2):
         if not self.realtime_uri:
             self.get_realtime_uri(station_id)
 
@@ -265,15 +267,27 @@ class HoymilesApi:
                 },
             )
             result = response.json()
+
             if result.get("status") != "0":
                 raise HoymilesApiError(
                     f"Realtime burst failed: {result.get('message', result)}"
                 )
+
             return result.get("data", {})
+
         except Exception:
-            # The temporary URI may have expired. Get a completely fresh one.
+            # The temporary URI may have expired.
+            # Clear it so the next attempt obtains a completely fresh URI.
             self.realtime_uri = ""
+
+            if attempt == 0:
+                continue
+
             raise
+
+    raise HoymilesApiError("Realtime polling failed")
+
+
 
     def get_station_cloud_data(
         self,
