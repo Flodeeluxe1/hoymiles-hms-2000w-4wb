@@ -311,6 +311,70 @@ class HoymilesApi:
 
         return devices
 
+
+    def get_device_status(
+        self,
+        station_id: int,
+        inverter_sn: str,
+    ) -> bool | None:
+        """Return the inverter online status.
+
+        Returns True when the inverter is connected, False when it is
+        disconnected, or None when the inverter cannot be found.
+        """
+        LOGGER.debug(
+            "Requesting device status for station_id=%s inverter_sn=%s.",
+            station_id,
+            inverter_sn,
+        )
+
+        url = HOME_API + "/pvm/api/0/station/select_device_of_tree"
+
+        response = self._post(
+            url,
+            json_data={"sid": station_id},
+        )
+        result = response.json()
+
+        LOGGER.debug(
+            "Device status response status=%s.",
+            result.get("status"),
+        )
+
+        if result.get("status") != "0":
+            raise HoymilesApiError(
+                "Device status request failed: "
+                f"{result.get('message', result)}"
+            )
+
+        for dtu in result.get("data", []):
+            for inverter in dtu.get("children", []):
+                if inverter.get("sn") == inverter_sn:
+                    warn_data = inverter.get("warn_data", {})
+                    connected = warn_data.get("connect")
+
+                    LOGGER.debug(
+                        "Inverter %s connection status=%s.",
+                        inverter_sn,
+                        connected,
+                    )
+
+                    if isinstance(connected, bool):
+                        return connected
+
+                    LOGGER.warning(
+                        "Inverter %s returned an invalid connection status.",
+                        inverter_sn,
+                    )
+                    return None
+
+        LOGGER.warning(
+            "Inverter %s was not found in device status response.",
+            inverter_sn,
+        )
+        return None
+
+
     @staticmethod
     def get_inverters(
         device_tree: list[dict[str, Any]],
