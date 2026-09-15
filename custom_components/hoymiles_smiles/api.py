@@ -241,7 +241,6 @@ class HoymilesApi:
         return uri
 
 
-```python
 def poll_realtime_burst(
     self,
     station_id: int,
@@ -276,7 +275,6 @@ def poll_realtime_burst(
         # The temporary URI may have expired.
         self.realtime_uri = ""
         raise
-```
 
 
 
