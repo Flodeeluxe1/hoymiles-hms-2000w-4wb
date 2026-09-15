@@ -73,7 +73,11 @@ class HoymilesRealtimeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         inverter_list = data.get("mis", [])
         if not inverter_list:
-            raise UpdateFailed("No realtime inverter data returned")
+            _LOGGER.debug(
+                "No realtime inverter data available. "
+                "The realtime URI will be refreshed on the next poll."
+            )
+            return {}
 
         inverter = next(
             (
