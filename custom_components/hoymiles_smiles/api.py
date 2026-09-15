@@ -1,3 +1,4 @@
+```python
 """Synchronous S-Miles Cloud API client.
 
 The HTTP/API calls intentionally stay close to the proven Colab implementation.
@@ -5,11 +6,9 @@ Home Assistant calls this client from executor jobs so requests do not block
 the Home Assistant event loop.
 """
 
-
 from __future__ import annotations
 
 import logging
-
 from typing import Any
 
 import requests
@@ -29,11 +28,14 @@ from .const import (
 class HoymilesApiError(Exception):
     """Raised when the S-Miles API returns an error."""
 
+
 LOGGER = logging.getLogger(__name__)
 
 
 def create_chart_proto_class():
     """Create the LineChart protobuf class used by the chart endpoint."""
+    LOGGER.warning("HOYMILES DEBUG: Creating chart protobuf class.")
+
     file_proto = descriptor_pb2.FileDescriptorProto()
     file_proto.name = "Chart.proto"
     file_proto.syntax = "proto3"
@@ -90,6 +92,9 @@ def create_chart_proto_class():
     pool = DescriptorPool()
     pool.Add(file_proto)
     descriptor = pool.FindMessageTypeByName("LineChart")
+
+    LOGGER.warning("HOYMILES DEBUG: Chart protobuf class created.")
+
     return GetMessageClass(descriptor)
 
 
@@ -107,8 +112,15 @@ class HoymilesApi:
         self.token: str | None = None
         self.realtime_uri: str = ""
 
+        LOGGER.warning(
+            "HOYMILES DEBUG: API client initialized. DC=%s, email=%s",
+            dc,
+            email,
+        )
+
     @property
     def headers(self) -> dict[str, str]:
+        """Return API request headers."""
         return {
             "Content-Type": "application/json",
             "User-Agent": self.user_agent,
@@ -122,22 +134,48 @@ class HoymilesApi:
         headers: dict[str, str] | None = None,
         json_data: dict[str, Any] | None = None,
     ) -> requests.Response:
-        response = requests.post(
+        """Send a POST request."""
+        LOGGER.warning(
+            "HOYMILES DEBUG: POST request to %s",
             url,
-            headers=headers or self.headers,
-            json=json_data,
-            timeout=REQUEST_TIMEOUT,
         )
-        response.raise_for_status()
-        return response
+
+        try:
+            response = requests.post(
+                url,
+                headers=headers or self.headers,
+                json=json_data,
+                timeout=REQUEST_TIMEOUT,
+            )
+
+            LOGGER.warning(
+                "HOYMILES DEBUG: HTTP response %s from %s",
+                response.status_code,
+                url,
+            )
+
+            response.raise_for_status()
+            return response
+
+        except Exception as err:
+            LOGGER.warning(
+                "HOYMILES DEBUG: POST failed for %s: %s",
+                url,
+                err,
+            )
+            raise
 
     def login(self) -> None:
         """Authenticate using the S-Miles Argon2id challenge."""
+        LOGGER.warning("HOYMILES DEBUG: Starting login.")
+
         pre_url = BASE_URL + "/iam/pub/3/auth/pre-insp"
         base_headers = {
             "Content-Type": "application/json",
             "User-Agent": self.user_agent,
         }
+
+        LOGGER.warning("HOYMILES DEBUG: Requesting authentication challenge.")
 
         response = self._post(
             pre_url,
@@ -145,6 +183,11 @@ class HoymilesApi:
             json_data={"u": self.email},
         )
         pre = response.json()
+
+        LOGGER.warning(
+            "HOYMILES DEBUG: Authentication challenge status=%s",
+            pre.get("status"),
+        )
 
         if pre.get("status") != "0":
             raise HoymilesApiError(
@@ -154,6 +197,8 @@ class HoymilesApi:
         challenge = pre["data"]
         nonce = challenge["n"]
         salt_hex = challenge["a"]
+
+        LOGGER.warning("HOYMILES DEBUG: Authentication challenge received.")
 
         argon_hash = hash_secret_raw(
             secret=self.password.encode("utf-8"),
@@ -166,7 +211,10 @@ class HoymilesApi:
             version=0x13,
         )
 
+        LOGGER.warning("HOYMILES DEBUG: Argon2id hash calculated.")
+
         login_url = BASE_URL + "/iam/pub/3/auth/login"
+
         response = self._post(
             login_url,
             headers=base_headers,
@@ -178,124 +226,200 @@ class HoymilesApi:
         )
         login = response.json()
 
+        LOGGER.warning(
+            "HOYMILES DEBUG: Login response status=%s",
+            login.get("status"),
+        )
+
         if login.get("status") != "0":
             raise HoymilesApiError(
                 f"Login failed: {login.get('message', login)}"
             )
 
         token = login.get("data", {}).get("token")
+
         if not token:
-            raise HoymilesApiError("Login succeeded but no token was returned.")
+            LOGGER.warning("HOYMILES DEBUG: Login succeeded but no token returned.")
+            raise HoymilesApiError(
+                "Login succeeded but no token was returned."
+            )
 
         self.token = token
 
+        LOGGER.warning("HOYMILES DEBUG: Login successful. Token received.")
+
     def get_stations(self) -> list[dict[str, Any]]:
         """Return the account's stations."""
+        LOGGER.warning("HOYMILES DEBUG: Requesting stations.")
+
         url = HOME_API + "/pvm/api/0/station/select_by_page"
+
         response = self._post(
             url,
             json_data={"page": 1, "page_size": 50},
         )
         result = response.json()
 
+        LOGGER.warning(
+            "HOYMILES DEBUG: Station response status=%s",
+            result.get("status"),
+        )
+
         if result.get("status") != "0":
             raise HoymilesApiError(
                 f"Station request failed: {result.get('message', result)}"
             )
 
-        return result.get("data", {}).get("list", [])
+        stations = result.get("data", {}).get("list", [])
+
+        LOGGER.warning(
+            "HOYMILES DEBUG: %s station(s) returned.",
+            len(stations),
+        )
+
+        return stations
 
     def get_device_tree(self, station_id: int) -> list[dict[str, Any]]:
         """Return DTUs and inverters for a station."""
+        LOGGER.warning(
+            "HOYMILES DEBUG: Requesting device tree for station_id=%s.",
+            station_id,
+        )
+
         url = HOME_API + "/pvmc/api/0/station/select_device_c"
-        response = self._post(url, json_data={"sid": station_id})
+
+        response = self._post(
+            url,
+            json_data={"sid": station_id},
+        )
         result = response.json()
+
+        LOGGER.warning(
+            "HOYMILES DEBUG: Device tree response status=%s.",
+            result.get("status"),
+        )
 
         if result.get("status") != "0":
             raise HoymilesApiError(
                 f"Device tree request failed: {result.get('message', result)}"
             )
 
-        return result.get("data", [])
+        devices = result.get("data", [])
+
+        LOGGER.warning(
+            "HOYMILES DEBUG: Device tree returned %s top-level device(s).",
+            len(devices),
+        )
+
+        return devices
 
     @staticmethod
     def get_inverters(
         device_tree: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
         """Extract inverters from the device tree."""
+        LOGGER.warning("HOYMILES DEBUG: Extracting inverters from device tree.")
+
         inverters: list[dict[str, Any]] = []
+
         for dtu in device_tree:
             for inverter in dtu.get("devices", []):
                 if inverter.get("id") and inverter.get("sn"):
                     inverters.append(inverter)
+
+        LOGGER.warning(
+            "HOYMILES DEBUG: Found %s inverter(s).",
+            len(inverters),
+        )
+
         return inverters
 
     def get_realtime_uri(self, station_id: int) -> str:
         """Request a fresh short-lived realtime URI."""
+        LOGGER.warning(
+            "HOYMILES DEBUG: Requesting fresh realtime URI for station_id=%s.",
+            station_id,
+        )
+
         url = HOME_API + "/pvm/api/0/station/get_sd_uri"
-        response = self._post(url, json_data={"sid": station_id})
-        result = response.json()
 
-        if result.get("status") != "0":
-            raise HoymilesApiError(
-                f"get_sd_uri failed: {result.get('message', result)}"
+        try:
+            response = self._post(
+                url,
+                json_data={"sid": station_id},
             )
+            result = response.json()
 
-        uri = result.get("data", {}).get("uri", "") or ""
-        self.realtime_uri = uri
-        return uri
-
-
-def poll_realtime_burst(
-    self,
-    station_id: int,
-    inverter_sn: str,
-) -> dict[str, Any]:
-    """Request m=3 inverter realtime data."""
-    if not self.realtime_uri:
-        self.get_realtime_uri(station_id)
-
-    if not self.realtime_uri:
-        raise HoymilesApiError(
-            "get_sd_uri returned an empty URI. "
-            "The inverter/DTU may currently be offline."
-        )
-
-    try:
-        response = self._post(
-            self.realtime_uri,
-            json_data={
-                "m": 3,
-                "mis": [inverter_sn],
-                "t": 1,
-            },
-        )
-        result = response.json()
-
-        LOGGER.warning("Realtime API response: %s", result)
-
-        if result.get("status") != "0":
-            raise HoymilesApiError(
-                f"Realtime burst failed: {result.get('message', result)}"
-            )
-
-        data = result.get("data", {})
-
-        # The realtime URI can expire without returning an API error.
-        # In that case Hoymiles returns data without the "mis" array.
-        if not data.get("mis"):
             LOGGER.warning(
-                "Realtime URI appears to be expired. Requesting a fresh URI."
+                "HOYMILES DEBUG: get_sd_uri response status=%s.",
+                result.get("status"),
             )
 
-            self.realtime_uri = ""
-            self.get_realtime_uri(station_id)
-
-            if not self.realtime_uri:
+            if result.get("status") != "0":
+                LOGGER.warning(
+                    "HOYMILES DEBUG: get_sd_uri failed: %s",
+                    result.get("message", result),
+                )
                 raise HoymilesApiError(
-                    "get_sd_uri returned an empty URI after realtime URI expired."
+                    f"get_sd_uri failed: {result.get('message', result)}"
                 )
 
+            uri = result.get("data", {}).get("uri", "") or ""
+
+            self.realtime_uri = uri
+
+            if uri:
+                LOGGER.warning(
+                    "HOYMILES DEBUG: Fresh realtime URI received successfully."
+                )
+            else:
+                LOGGER.warning(
+                    "HOYMILES DEBUG: get_sd_uri returned an EMPTY URI."
+                )
+
+            return uri
+
+        except Exception as err:
+            LOGGER.warning(
+                "HOYMILES DEBUG: Exception while requesting realtime URI: %s",
+                err,
+            )
+            raise
+
+    def poll_realtime_burst(
+        self,
+        station_id: int,
+        inverter_sn: str,
+    ) -> dict[str, Any]:
+        """Request m=3 inverter realtime data."""
+        LOGGER.warning(
+            "HOYMILES DEBUG: Starting realtime poll. "
+            "station_id=%s inverter_sn=%s URI_present=%s",
+            station_id,
+            inverter_sn,
+            bool(self.realtime_uri),
+        )
+
+        if not self.realtime_uri:
+            LOGGER.warning(
+                "HOYMILES DEBUG: No realtime URI available. Requesting a new one."
+            )
+            self.get_realtime_uri(station_id)
+
+        if not self.realtime_uri:
+            LOGGER.warning(
+                "HOYMILES DEBUG: Realtime URI is EMPTY after get_realtime_uri()."
+            )
+            raise HoymilesApiError(
+                "get_sd_uri returned an empty URI. "
+                "The inverter/DTU may currently be offline."
+            )
+
+        LOGGER.warning(
+            "HOYMILES DEBUG: Sending realtime burst request."
+        )
+
+        try:
             response = self._post(
                 self.realtime_uri,
                 json_data={
@@ -304,41 +428,102 @@ def poll_realtime_burst(
                     "t": 1,
                 },
             )
+
+            LOGGER.warning(
+                "HOYMILES DEBUG: Realtime burst HTTP request completed."
+            )
+
             result = response.json()
 
-            LOGGER.warning("Realtime API response after URI refresh: %s", result)
+            LOGGER.warning(
+                "HOYMILES DEBUG: Realtime API response: %s",
+                result,
+            )
 
-            if result.get("status") != "0":
+            status = result.get("status")
+            data = result.get("data", {})
+            inverter_list = data.get("mis", [])
+
+            LOGGER.warning(
+                "HOYMILES DEBUG: Realtime status=%s, data_keys=%s, "
+                "inverter_count=%s, dly=%s.",
+                status,
+                list(data.keys()) if isinstance(data, dict) else None,
+                len(inverter_list),
+                data.get("dly") if isinstance(data, dict) else None,
+            )
+
+            if status != "0":
+                LOGGER.warning(
+                    "HOYMILES DEBUG: Realtime burst returned non-zero status."
+                )
                 raise HoymilesApiError(
-                    "Realtime burst failed after URI refresh: "
-                    f"{result.get('message', result)}"
+                    f"Realtime burst failed: {result.get('message', result)}"
                 )
 
-            return result.get("data", {})
+            if not inverter_list:
+                LOGGER.warning(
+                    "HOYMILES DEBUG: Realtime response contains NO 'mis' "
+                    "inverter data. URI may be expired or realtime data unavailable."
+                )
 
-        return data
+            else:
+                LOGGER.warning(
+                    "HOYMILES DEBUG: Realtime inverter data received for %s inverter(s).",
+                    len(inverter_list),
+                )
 
-    except Exception:
-        # Clear the URI so the next polling cycle obtains a fresh one.
-        self.realtime_uri = ""
-        raise
+            return data
 
+        except Exception as err:
+            LOGGER.warning(
+                "HOYMILES DEBUG: Exception during realtime burst: %s",
+                err,
+            )
+
+            LOGGER.warning(
+                "HOYMILES DEBUG: Clearing realtime URI because realtime request failed."
+            )
+
+            self.realtime_uri = ""
+            raise
 
     def get_station_cloud_data(
         self,
         station_id: int,
     ) -> dict[str, Any]:
         """Return station daily/monthly/yearly/total energy and real power."""
+        LOGGER.warning(
+            "HOYMILES DEBUG: Requesting station cloud data for station_id=%s.",
+            station_id,
+        )
+
         url = HOME_API + "/pvmc/api/0/station_data/count_station_real_data_c"
-        response = self._post(url, json_data={"sid": station_id})
+
+        response = self._post(
+            url,
+            json_data={"sid": station_id},
+        )
         result = response.json()
+
+        LOGGER.warning(
+            "HOYMILES DEBUG: Station cloud response status=%s.",
+            result.get("status"),
+        )
 
         if result.get("status") != "0":
             raise HoymilesApiError(
                 f"Station cloud request failed: {result.get('message', result)}"
             )
 
-        return result.get("data", {})
+        data = result.get("data", {})
+
+        LOGGER.warning(
+            "HOYMILES DEBUG: Station cloud data keys=%s.",
+            list(data.keys()),
+        )
+
+        return data
 
     def get_chart_data(
         self,
@@ -348,7 +533,15 @@ def poll_realtime_burst(
         """Return the last positive values from the inverter LineChart."""
         from datetime import datetime
 
+        LOGGER.warning(
+            "HOYMILES DEBUG: Requesting chart data. "
+            "station_id=%s inverter_id=%s.",
+            station_id,
+            inverter_id,
+        )
+
         url = HOME_API + "/pvmc/api/0/micro_data/count_by_day_c"
+
         body = {
             "sid": station_id,
             "date": datetime.now().strftime("%Y-%m-%d"),
@@ -361,22 +554,56 @@ def poll_realtime_burst(
             ],
         }
 
-        response = self._post(url, json_data=body)
+        response = self._post(
+            url,
+            json_data=body,
+        )
+
         raw_chart = response.content
 
+        LOGGER.warning(
+            "HOYMILES DEBUG: Chart response received. %s bytes.",
+            len(raw_chart),
+        )
+
         if not raw_chart:
+            LOGGER.warning(
+                "HOYMILES DEBUG: Chart response is EMPTY."
+            )
             return {}
 
-        chart = LineChart()
-        chart.ParseFromString(raw_chart)
+        try:
+            chart = LineChart()
+            chart.ParseFromString(raw_chart)
+
+            LOGGER.warning(
+                "HOYMILES DEBUG: Chart protobuf parsed. series_count=%s.",
+                len(chart.series),
+            )
+
+        except Exception as err:
+            LOGGER.warning(
+                "HOYMILES DEBUG: Chart protobuf parsing failed: %s",
+                err,
+            )
+            raise
 
         result: dict[str, float] = {}
+
         for series in chart.series:
             values = list(series.data)
+
+            LOGGER.warning(
+                "HOYMILES DEBUG: Chart series type=%s values=%s.",
+                series.type,
+                len(values),
+            )
+
             if not values:
                 continue
 
             last_positive = None
+
             for value in reversed(values):
                 if value > 0:
                     last_positive = round(float(value), 1)
@@ -385,4 +612,10 @@ def poll_realtime_burst(
             if last_positive is not None:
                 result[series.type] = last_positive
 
+        LOGGER.warning(
+            "HOYMILES DEBUG: Chart data extracted: %s",
+            result,
+        )
+
         return result
+```
