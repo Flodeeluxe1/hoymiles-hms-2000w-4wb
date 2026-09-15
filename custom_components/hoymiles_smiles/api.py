@@ -33,7 +33,7 @@ LOGGER = logging.getLogger(__name__)
 
 def create_chart_proto_class():
     """Create the LineChart protobuf class used by the chart endpoint."""
-    LOGGER.warning("HOYMILES DEBUG: Creating chart protobuf class.")
+    LOGGER.debug("Creating chart protobuf class.")
 
     file_proto = descriptor_pb2.FileDescriptorProto()
     file_proto.name = "Chart.proto"
@@ -92,7 +92,7 @@ def create_chart_proto_class():
     pool.Add(file_proto)
     descriptor = pool.FindMessageTypeByName("LineChart")
 
-    LOGGER.warning("HOYMILES DEBUG: Chart protobuf class created.")
+    LOGGER.debug("Chart protobuf class created.")
 
     return GetMessageClass(descriptor)
 
@@ -111,8 +111,8 @@ class HoymilesApi:
         self.token: str | None = None
         self.realtime_uri: str = ""
 
-        LOGGER.warning(
-            "HOYMILES DEBUG: API client initialized. DC=%s, email=%s",
+        LOGGER.debug(
+            "API client initialized. DC=%s, email=%s",
             dc,
             email,
         )
@@ -134,10 +134,7 @@ class HoymilesApi:
         json_data: dict[str, Any] | None = None,
     ) -> requests.Response:
         """Send a POST request."""
-        LOGGER.warning(
-            "HOYMILES DEBUG: POST request to %s",
-            url,
-        )
+        LOGGER.debug("POST request to %s", url)
 
         try:
             response = requests.post(
@@ -147,8 +144,8 @@ class HoymilesApi:
                 timeout=REQUEST_TIMEOUT,
             )
 
-            LOGGER.warning(
-                "HOYMILES DEBUG: HTTP response %s from %s",
+            LOGGER.debug(
+                "HTTP response %s from %s",
                 response.status_code,
                 url,
             )
@@ -158,7 +155,7 @@ class HoymilesApi:
 
         except Exception as err:
             LOGGER.warning(
-                "HOYMILES DEBUG: POST failed for %s: %s",
+                "POST failed for %s: %s",
                 url,
                 err,
             )
@@ -166,7 +163,7 @@ class HoymilesApi:
 
     def login(self) -> None:
         """Authenticate using the S-Miles Argon2id challenge."""
-        LOGGER.warning("HOYMILES DEBUG: Starting login.")
+        LOGGER.debug("Starting login.")
 
         pre_url = BASE_URL + "/iam/pub/3/auth/pre-insp"
         base_headers = {
@@ -174,7 +171,7 @@ class HoymilesApi:
             "User-Agent": self.user_agent,
         }
 
-        LOGGER.warning("HOYMILES DEBUG: Requesting authentication challenge.")
+        LOGGER.debug("Requesting authentication challenge.")
 
         response = self._post(
             pre_url,
@@ -183,8 +180,8 @@ class HoymilesApi:
         )
         pre = response.json()
 
-        LOGGER.warning(
-            "HOYMILES DEBUG: Authentication challenge status=%s",
+        LOGGER.debug(
+            "Authentication challenge status=%s",
             pre.get("status"),
         )
 
@@ -197,7 +194,7 @@ class HoymilesApi:
         nonce = challenge["n"]
         salt_hex = challenge["a"]
 
-        LOGGER.warning("HOYMILES DEBUG: Authentication challenge received.")
+        LOGGER.debug("Authentication challenge received.")
 
         argon_hash = hash_secret_raw(
             secret=self.password.encode("utf-8"),
@@ -210,7 +207,7 @@ class HoymilesApi:
             version=0x13,
         )
 
-        LOGGER.warning("HOYMILES DEBUG: Argon2id hash calculated.")
+        LOGGER.debug("Argon2id hash calculated.")
 
         login_url = BASE_URL + "/iam/pub/3/auth/login"
 
@@ -225,8 +222,8 @@ class HoymilesApi:
         )
         login = response.json()
 
-        LOGGER.warning(
-            "HOYMILES DEBUG: Login response status=%s",
+        LOGGER.debug(
+            "Login response status=%s",
             login.get("status"),
         )
 
@@ -238,18 +235,20 @@ class HoymilesApi:
         token = login.get("data", {}).get("token")
 
         if not token:
-            LOGGER.warning("HOYMILES DEBUG: Login succeeded but no token returned.")
+            LOGGER.warning(
+                "Login succeeded but no token was returned."
+            )
             raise HoymilesApiError(
                 "Login succeeded but no token was returned."
             )
 
         self.token = token
 
-        LOGGER.warning("HOYMILES DEBUG: Login successful. Token received.")
+        LOGGER.debug("Login successful. Token received.")
 
     def get_stations(self) -> list[dict[str, Any]]:
         """Return the account's stations."""
-        LOGGER.warning("HOYMILES DEBUG: Requesting stations.")
+        LOGGER.debug("Requesting stations.")
 
         url = HOME_API + "/pvm/api/0/station/select_by_page"
 
@@ -259,8 +258,8 @@ class HoymilesApi:
         )
         result = response.json()
 
-        LOGGER.warning(
-            "HOYMILES DEBUG: Station response status=%s",
+        LOGGER.debug(
+            "Station response status=%s",
             result.get("status"),
         )
 
@@ -271,8 +270,8 @@ class HoymilesApi:
 
         stations = result.get("data", {}).get("list", [])
 
-        LOGGER.warning(
-            "HOYMILES DEBUG: %s station(s) returned.",
+        LOGGER.debug(
+            "%s station(s) returned.",
             len(stations),
         )
 
@@ -280,8 +279,8 @@ class HoymilesApi:
 
     def get_device_tree(self, station_id: int) -> list[dict[str, Any]]:
         """Return DTUs and inverters for a station."""
-        LOGGER.warning(
-            "HOYMILES DEBUG: Requesting device tree for station_id=%s.",
+        LOGGER.debug(
+            "Requesting device tree for station_id=%s.",
             station_id,
         )
 
@@ -293,8 +292,8 @@ class HoymilesApi:
         )
         result = response.json()
 
-        LOGGER.warning(
-            "HOYMILES DEBUG: Device tree response status=%s.",
+        LOGGER.debug(
+            "Device tree response status=%s.",
             result.get("status"),
         )
 
@@ -305,8 +304,8 @@ class HoymilesApi:
 
         devices = result.get("data", [])
 
-        LOGGER.warning(
-            "HOYMILES DEBUG: Device tree returned %s top-level device(s).",
+        LOGGER.debug(
+            "Device tree returned %s top-level device(s).",
             len(devices),
         )
 
@@ -317,7 +316,7 @@ class HoymilesApi:
         device_tree: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
         """Extract inverters from the device tree."""
-        LOGGER.warning("HOYMILES DEBUG: Extracting inverters from device tree.")
+        LOGGER.debug("Extracting inverters from device tree.")
 
         inverters: list[dict[str, Any]] = []
 
@@ -326,8 +325,8 @@ class HoymilesApi:
                 if inverter.get("id") and inverter.get("sn"):
                     inverters.append(inverter)
 
-        LOGGER.warning(
-            "HOYMILES DEBUG: Found %s inverter(s).",
+        LOGGER.debug(
+            "Found %s inverter(s).",
             len(inverters),
         )
 
@@ -335,8 +334,8 @@ class HoymilesApi:
 
     def get_realtime_uri(self, station_id: int) -> str:
         """Request a fresh short-lived realtime URI."""
-        LOGGER.warning(
-            "HOYMILES DEBUG: Requesting fresh realtime URI for station_id=%s.",
+        LOGGER.debug(
+            "Requesting fresh realtime URI for station_id=%s.",
             station_id,
         )
 
@@ -349,14 +348,14 @@ class HoymilesApi:
             )
             result = response.json()
 
-            LOGGER.warning(
-                "HOYMILES DEBUG: get_sd_uri response status=%s.",
+            LOGGER.debug(
+                "get_sd_uri response status=%s.",
                 result.get("status"),
             )
 
             if result.get("status") != "0":
                 LOGGER.warning(
-                    "HOYMILES DEBUG: get_sd_uri failed: %s",
+                    "get_sd_uri failed: %s",
                     result.get("message", result),
                 )
                 raise HoymilesApiError(
@@ -368,19 +367,19 @@ class HoymilesApi:
             self.realtime_uri = uri
 
             if uri:
-                LOGGER.warning(
-                    "HOYMILES DEBUG: Fresh realtime URI received successfully."
+                LOGGER.debug(
+                    "Fresh realtime URI received successfully."
                 )
             else:
                 LOGGER.warning(
-                    "HOYMILES DEBUG: get_sd_uri returned an EMPTY URI."
+                    "get_sd_uri returned an EMPTY URI."
                 )
 
             return uri
 
         except Exception as err:
             LOGGER.warning(
-                "HOYMILES DEBUG: Exception while requesting realtime URI: %s",
+                "Exception while requesting realtime URI: %s",
                 err,
             )
             raise
@@ -391,8 +390,8 @@ class HoymilesApi:
         inverter_sn: str,
     ) -> dict[str, Any]:
         """Request m=3 inverter realtime data."""
-        LOGGER.warning(
-            "HOYMILES DEBUG: Starting realtime poll. "
+        LOGGER.debug(
+            "Starting realtime poll. "
             "station_id=%s inverter_sn=%s URI_present=%s",
             station_id,
             inverter_sn,
@@ -400,23 +399,21 @@ class HoymilesApi:
         )
 
         if not self.realtime_uri:
-            LOGGER.warning(
-                "HOYMILES DEBUG: No realtime URI available. Requesting a new one."
+            LOGGER.debug(
+                "No realtime URI available. Requesting a new one."
             )
             self.get_realtime_uri(station_id)
 
         if not self.realtime_uri:
             LOGGER.warning(
-                "HOYMILES DEBUG: Realtime URI is EMPTY after get_realtime_uri()."
+                "Realtime URI is EMPTY after get_realtime_uri()."
             )
             raise HoymilesApiError(
                 "get_sd_uri returned an empty URI. "
                 "The inverter/DTU may currently be offline."
             )
 
-        LOGGER.warning(
-            "HOYMILES DEBUG: Sending realtime burst request."
-        )
+        LOGGER.debug("Sending realtime burst request.")
 
         try:
             response = self._post(
@@ -428,14 +425,14 @@ class HoymilesApi:
                 },
             )
 
-            LOGGER.warning(
-                "HOYMILES DEBUG: Realtime burst HTTP request completed."
+            LOGGER.debug(
+                "Realtime burst HTTP request completed."
             )
 
             result = response.json()
 
-            LOGGER.warning(
-                "HOYMILES DEBUG: Realtime API response: %s",
+            LOGGER.debug(
+                "Realtime API response: %s",
                 result,
             )
 
@@ -443,8 +440,8 @@ class HoymilesApi:
             data = result.get("data", {})
             inverter_list = data.get("mis", [])
 
-            LOGGER.warning(
-                "HOYMILES DEBUG: Realtime status=%s, data_keys=%s, "
+            LOGGER.debug(
+                "Realtime status=%s, data_keys=%s, "
                 "inverter_count=%s, dly=%s.",
                 status,
                 list(data.keys()) if isinstance(data, dict) else None,
@@ -454,7 +451,8 @@ class HoymilesApi:
 
             if status != "0":
                 LOGGER.warning(
-                    "HOYMILES DEBUG: Realtime burst returned non-zero status."
+                    "Realtime burst returned non-zero status: %s",
+                    status,
                 )
                 raise HoymilesApiError(
                     f"Realtime burst failed: {result.get('message', result)}"
@@ -462,14 +460,14 @@ class HoymilesApi:
 
             if not inverter_list:
                 LOGGER.warning(
-                    "HOYMILES DEBUG: Realtime response contains NO 'mis' "
-                    "inverter data. URI may be expired or realtime data unavailable."
+                    "Realtime response contains no inverter data. "
+                    "Clearing realtime URI so the next poll requests a fresh URI."
                 )
                 self.realtime_uri = ""
 
             else:
-                LOGGER.warning(
-                    "HOYMILES DEBUG: Realtime inverter data received for %s inverter(s).",
+                LOGGER.debug(
+                    "Realtime inverter data received for %s inverter(s).",
                     len(inverter_list),
                 )
 
@@ -477,12 +475,12 @@ class HoymilesApi:
 
         except Exception as err:
             LOGGER.warning(
-                "HOYMILES DEBUG: Exception during realtime burst: %s",
+                "Exception during realtime burst: %s",
                 err,
             )
 
             LOGGER.warning(
-                "HOYMILES DEBUG: Clearing realtime URI because realtime request failed."
+                "Clearing realtime URI because realtime request failed."
             )
 
             self.realtime_uri = ""
@@ -493,8 +491,8 @@ class HoymilesApi:
         station_id: int,
     ) -> dict[str, Any]:
         """Return station daily/monthly/yearly/total energy and real power."""
-        LOGGER.warning(
-            "HOYMILES DEBUG: Requesting station cloud data for station_id=%s.",
+        LOGGER.debug(
+            "Requesting station cloud data for station_id=%s.",
             station_id,
         )
 
@@ -506,8 +504,8 @@ class HoymilesApi:
         )
         result = response.json()
 
-        LOGGER.warning(
-            "HOYMILES DEBUG: Station cloud response status=%s.",
+        LOGGER.debug(
+            "Station cloud response status=%s.",
             result.get("status"),
         )
 
@@ -518,8 +516,8 @@ class HoymilesApi:
 
         data = result.get("data", {})
 
-        LOGGER.warning(
-            "HOYMILES DEBUG: Station cloud data keys=%s.",
+        LOGGER.debug(
+            "Station cloud data keys=%s.",
             list(data.keys()),
         )
 
@@ -533,8 +531,8 @@ class HoymilesApi:
         """Return the last positive values from the inverter LineChart."""
         from datetime import datetime
 
-        LOGGER.warning(
-            "HOYMILES DEBUG: Requesting chart data. "
+        LOGGER.debug(
+            "Requesting chart data. "
             "station_id=%s inverter_id=%s.",
             station_id,
             inverter_id,
@@ -561,29 +559,27 @@ class HoymilesApi:
 
         raw_chart = response.content
 
-        LOGGER.warning(
-            "HOYMILES DEBUG: Chart response received. %s bytes.",
+        LOGGER.debug(
+            "Chart response received. %s bytes.",
             len(raw_chart),
         )
 
         if not raw_chart:
-            LOGGER.warning(
-                "HOYMILES DEBUG: Chart response is EMPTY."
-            )
+            LOGGER.warning("Chart response is EMPTY.")
             return {}
 
         try:
             chart = LineChart()
             chart.ParseFromString(raw_chart)
 
-            LOGGER.warning(
-                "HOYMILES DEBUG: Chart protobuf parsed. series_count=%s.",
+            LOGGER.debug(
+                "Chart protobuf parsed. series_count=%s.",
                 len(chart.series),
             )
 
         except Exception as err:
             LOGGER.warning(
-                "HOYMILES DEBUG: Chart protobuf parsing failed: %s",
+                "Chart protobuf parsing failed: %s",
                 err,
             )
             raise
@@ -593,8 +589,8 @@ class HoymilesApi:
         for series in chart.series:
             values = list(series.data)
 
-            LOGGER.warning(
-                "HOYMILES DEBUG: Chart series type=%s values=%s.",
+            LOGGER.debug(
+                "Chart series type=%s values=%s.",
                 series.type,
                 len(values),
             )
@@ -612,8 +608,8 @@ class HoymilesApi:
             if last_positive is not None:
                 result[series.type] = last_positive
 
-        LOGGER.warning(
-            "HOYMILES DEBUG: Chart data extracted: %s",
+        LOGGER.debug(
+            "Chart data extracted: %s",
             result,
         )
 
