@@ -465,6 +465,7 @@ class HoymilesApi:
                     "HOYMILES DEBUG: Realtime response contains NO 'mis' "
                     "inverter data. URI may be expired or realtime data unavailable."
                 )
+                self.realtime_uri = ""
 
             else:
                 LOGGER.warning(
