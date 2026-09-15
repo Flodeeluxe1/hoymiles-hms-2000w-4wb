@@ -1,4 +1,3 @@
-```python
 """Synchronous S-Miles Cloud API client.
 
 The HTTP/API calls intentionally stay close to the proven Colab implementation.
@@ -618,4 +617,3 @@ class HoymilesApi:
         )
 
         return result
-```
