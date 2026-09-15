@@ -90,8 +90,8 @@ class HoymilesRealtimeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "No realtime inverter data available. "
                 "The realtime URI will be refreshed on the next poll."
             )
-            return {}
-
+            return { KEY_PAC: 0, KEY_PV1: 0, KEY_PV2: 0, KEY_PV3: 0, KEY_PV4: 0, }
+            
         inverter = next(
             (
                 item
