@@ -137,8 +137,10 @@ class HoymilesCloudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def _async_update_data(self) -> dict[str, Any]:
         try:
-            station_data, chart_data = await self.hass.async_add_executor_job(
-                self._poll_cloud,
+            station_data, chart_data, profit_data = (
+                await self.hass.async_add_executor_job(
+                    self._poll_cloud,
+                )
             )
         except Exception as err:
             raise UpdateFailed(str(err)) from err
@@ -153,6 +155,10 @@ class HoymilesCloudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             KEY_VOLTAGE: chart_data.get(KEY_VOLTAGE),
             KEY_FREQUENCY: chart_data.get(KEY_FREQUENCY),
             KEY_TEMPERATURE: chart_data.get(KEY_TEMPERATURE),
+            KEY_TODAY_PROFIT: _to_float(profit_data.get(KEY_TODAY_PROFIT)),
+            KEY_MONTHLY_PROFIT: _to_float(profit_data.get(KEY_MONTHLY_PROFIT)),
+            KEY_YEARLY_PROFIT: _to_float(profit_data.get(KEY_YEARLY_PROFIT)),
+            KEY_TOTAL_PROFIT: _to_float(profit_data.get(KEY_TOTAL_PROFIT)),
         }
 
     def _poll_cloud(self) -> tuple[dict[str, Any], dict[str, float]]:
@@ -161,6 +167,8 @@ class HoymilesCloudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self.station_id,
             self.inverter_id,
         )
+        profit_data = self.api.get_profit_data(self.station_id)
+        
         return station_data, chart_data
 
 
