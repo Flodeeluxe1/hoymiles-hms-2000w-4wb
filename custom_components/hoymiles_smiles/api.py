@@ -126,7 +126,7 @@ class HoymilesApi:
             "Authorization": self.token or "",
         }
 
-    ```python
+    
     def _post(
         self,
         url: str,
@@ -189,7 +189,6 @@ class HoymilesApi:
                 err,
             )
             raise
-```
 
 
     def login(self) -> None:
