@@ -126,7 +126,6 @@ class HoymilesApi:
             "Authorization": self.token or "",
         }
 
-    
     def _post(
         self,
         url: str,
@@ -189,7 +188,6 @@ class HoymilesApi:
                 err,
             )
             raise
-
 
     def login(self) -> None:
         """Authenticate using the S-Miles Argon2id challenge."""
