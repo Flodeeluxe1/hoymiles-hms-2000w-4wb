@@ -155,10 +155,10 @@ class HoymilesCloudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             KEY_VOLTAGE: chart_data.get(KEY_VOLTAGE),
             KEY_FREQUENCY: chart_data.get(KEY_FREQUENCY),
             KEY_TEMPERATURE: chart_data.get(KEY_TEMPERATURE),
-            KEY_TODAY_PROFIT: _to_float(profit_data.get(KEY_TODAY_PROFIT)),
-            KEY_MONTHLY_PROFIT: _to_float(profit_data.get(KEY_MONTHLY_PROFIT)),
-            KEY_YEARLY_PROFIT: _to_float(profit_data.get(KEY_YEARLY_PROFIT)),
-            KEY_TOTAL_PROFIT: _to_float(profit_data.get(KEY_TOTAL_PROFIT)),
+            KEY_TODAY_PROFIT: _to_float(profit_data.get(KEY_TODAY_PROFIT), 2),
+            KEY_MONTHLY_PROFIT: _to_float(profit_data.get(KEY_MONTHLY_PROFIT), 2),
+            KEY_YEARLY_PROFIT: _to_float(profit_data.get(KEY_YEARLY_PROFIT), 2),
+            KEY_TOTAL_PROFIT: _to_float(profit_data.get(KEY_TOTAL_PROFIT), 2),
         }
 
     def _poll_cloud(self) -> tuple[dict[str, Any], dict[str, float]]:
@@ -172,11 +172,15 @@ class HoymilesCloudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return station_data, chart_data, profit_data
 
 
-def _to_float(value: Any) -> float | None:
-    """Convert API numeric strings to float."""
-    if value is None or value == "":
-        return None
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
+    def _to_float(value: Any, decimals: int | None = None) -> float | None:
+        """Convert API numeric strings to float."""
+        if value is None or value == "":
+            return None
+    
+        try:
+            result = float(value)
+            if decimals is not None:
+                return round(result, decimals)
+            return result
+        except (TypeError, ValueError):
+            return None
