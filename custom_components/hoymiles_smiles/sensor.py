@@ -149,6 +149,30 @@ CLOUD_SENSORS = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
+    SensorDescription(
+        key=KEY_TODAY_PROFIT,
+        name="Daily Profit",
+        native_unit_of_measurement="€",
+        state_class=SensorStateClass.TOTAL,
+    ),
+    SensorDescription(
+        key=KEY_MONTHLY_PROFIT,
+        name="Monthly Profit",
+        native_unit_of_measurement="€",
+        state_class=SensorStateClass.TOTAL,
+    ),
+    SensorDescription(
+        key=KEY_YEARLY_PROFIT,
+        name="Yearly Profit",
+        native_unit_of_measurement="€",
+        state_class=SensorStateClass.TOTAL,
+    ),
+    SensorDescription(
+        key=KEY_TOTAL_PROFIT,
+        name="Total Profit",
+        native_unit_of_measurement="€",
+        state_class=SensorStateClass.TOTAL,
+    ),
 )
 
 
