@@ -615,6 +615,43 @@ class HoymilesApi:
 
         return data
 
+    def get_profit_data(
+        self,
+        station_id: int,
+    ) -> dict[str, Any]:
+        """Return station profit data."""
+        LOGGER.debug(
+            "Requesting profit data for station_id=%s.",
+            station_id,
+        )
+
+        url = HOME_API + "/eps/api/0/record/stat_a"
+
+        response = self._post(
+            url,
+            json_data={"sid": station_id},
+        )
+        result = response.json()
+
+        LOGGER.debug(
+            "Profit response status=%s.",
+            result.get("status"),
+        )
+
+        if result.get("status") != "0":
+            raise HoymilesApiError(
+                f"Profit request failed: {result.get('message', result)}"
+            )
+
+        data = result.get("data", {})
+
+        LOGGER.debug(
+            "Profit data received: %s",
+            data,
+        )
+
+        return data
+    
     def get_chart_data(
         self,
         station_id: int,
