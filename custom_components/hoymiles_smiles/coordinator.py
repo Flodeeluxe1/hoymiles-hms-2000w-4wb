@@ -33,6 +33,10 @@ from .const import (
     KEY_VOLTAGE,
     KEY_YEARLY,
     REALTIME_POLL_SECONDS,
+    KEY_TODAY_PROFIT,
+    KEY_MONTHLY_PROFIT,
+    KEY_YEARLY_PROFIT,
+    KEY_TOTAL_PROFIT,
 )
 
 _LOGGER = logging.getLogger(__name__)
