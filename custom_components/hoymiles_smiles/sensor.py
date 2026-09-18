@@ -37,6 +37,10 @@ from .const import (
     KEY_TOTAL,
     KEY_VOLTAGE,
     KEY_YEARLY,
+    KEY_TODAY_PROFIT,
+    KEY_MONTHLY_PROFIT,
+    KEY_YEARLY_PROFIT,
+    KEY_TOTAL_PROFIT,
 )
 from .coordinator import HoymilesCloudCoordinator, HoymilesRealtimeCoordinator
 
