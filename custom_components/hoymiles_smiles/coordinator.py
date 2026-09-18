@@ -169,7 +169,7 @@ class HoymilesCloudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
         profit_data = self.api.get_profit_data(self.station_id)
         
-        return station_data, chart_data
+        return station_data, chart_data, profit_data
 
 
 def _to_float(value: Any) -> float | None:
