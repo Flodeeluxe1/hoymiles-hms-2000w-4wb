@@ -37,6 +37,11 @@ KEY_YEARLY = "year_eq"
 KEY_TOTAL = "total_eq"
 KEY_REAL_POWER = "real_power"
 
+KEY_TODAY_PROFIT = "today_profit"
+KEY_MONTHLY_PROFIT = "monthly_profit"
+KEY_YEARLY_PROFIT = "yearly_profit"
+KEY_TOTAL_PROFIT = "total_profit"
+
 KEY_POWER = "MI_POWER"
 KEY_VOLTAGE = "MI_NET_V"
 KEY_FREQUENCY = "MI_NET_RATE"
