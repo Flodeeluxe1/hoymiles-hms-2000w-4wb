@@ -160,7 +160,6 @@ class HoymilesCloudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             KEY_YEARLY_PROFIT: _to_float(profit_data.get(KEY_YEARLY_PROFIT), 2),
             KEY_TOTAL_PROFIT: _to_float(profit_data.get(KEY_TOTAL_PROFIT), 2),
         }
-
     def _poll_cloud(
         self,
     ) -> tuple[dict[str, Any], dict[str, float], dict[str, Any]]:
@@ -174,18 +173,18 @@ class HoymilesCloudCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return station_data, chart_data, profit_data
 
 
-    def _to_float(
-        value: Any,
-        decimals: int | None = None,
-    ) -> float | None:
-        """Convert API numeric strings to float."""
-        if value is None or value == "":
-            return None
-    
-        try:
-            result = float(value)
-            if decimals is not None:
-                return round(result, decimals)
-            return result
-        except (TypeError, ValueError):
-            return None
+def _to_float(
+    value: Any,
+    decimals: int | None = None,
+) -> float | None:
+    """Convert API numeric strings to float."""
+    if value is None or value == "":
+        return None
+
+    try:
+        result = float(value)
+        if decimals is not None:
+            return round(result, decimals)
+        return result
+    except (TypeError, ValueError):
+        return None
