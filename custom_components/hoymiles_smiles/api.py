@@ -126,14 +126,16 @@ class HoymilesApi:
             "Authorization": self.token or "",
         }
 
+    ```python
     def _post(
         self,
         url: str,
         *,
         headers: dict[str, str] | None = None,
         json_data: dict[str, Any] | None = None,
+        _retry: bool = True,
     ) -> requests.Response:
-        """Send a POST request."""
+        """Send a POST request and retry once after token expiration."""
         LOGGER.debug("POST request to %s", url)
 
         try:
@@ -151,6 +153,33 @@ class HoymilesApi:
             )
 
             response.raise_for_status()
+
+            # Hoymiles can return HTTP 200 even when the authentication
+            # token has expired. Detect that from the API response.
+            try:
+                result = response.json()
+            except ValueError:
+                result = None
+
+            if (
+                _retry
+                and isinstance(result, dict)
+                and result.get("status") == "100"
+                and result.get("message") == "token verify error"
+            ):
+                LOGGER.warning(
+                    "Hoymiles token has expired. Re-authenticating and retrying request."
+                )
+
+                self.login()
+
+                return self._post(
+                    url,
+                    headers=headers,
+                    json_data=json_data,
+                    _retry=False,
+                )
+
             return response
 
         except Exception as err:
@@ -160,6 +189,8 @@ class HoymilesApi:
                 err,
             )
             raise
+```
+
 
     def login(self) -> None:
         """Authenticate using the S-Miles Argon2id challenge."""
